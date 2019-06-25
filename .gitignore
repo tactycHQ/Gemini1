@@ -125,3 +125,6 @@ dmypy.json
 .pyre/
 
 /APICalls/keys.json
+.idea/
+APICalls/tweets.csv
+requirements.txt
