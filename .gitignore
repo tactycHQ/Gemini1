@@ -124,7 +124,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/APICalls/keys.json
+/Application/APICalls/keys.json
 .idea/
-APICalls/tweets.csv
+Application/APICalls/tweets.csv
 requirements.txt
