@@ -56,7 +56,7 @@ contraction_mapping = {"ain't": "is not", "aren't": "are not","can't": "cannot",
 
 keys = get_config_from_json('.//keys.json')
 auth = tw.AppAuthHandler(keys.twitter_keys.consumer_key, keys.twitter_keys.consumer_secret)
-api = tw.API(auth)
+api = tw.API(auth, wait_on_rate_limit=True)
 limit = api.rate_limit_status()
 limit = DotMap(limit)
 print(limit.resources.search)
@@ -72,10 +72,11 @@ class GetTwitter():
         tweet_location = []
         tweet_time= []
 
-        query+= " AND -filter:retweets AND -filter:links AND -filter:media AND -filter:replies"
+
         date_since = date_since
         tweets = tw.Cursor(api.search,
                   q=query,
+                  count=max_tweets,
                   tweet_mode = 'extended',
                   result_type = 'mixed',
                   lang="en",
@@ -123,13 +124,16 @@ class GetTwitter():
 
 
 if __name__ == '__main__':
-    query = 'GameofThrones AND (show OR HBO)'
+    query = 'england -filter:retweets -filter:links -filter:media -filter:replies'
+    # query = 'biglittlelies'
     max_tweets = 100
     date_since = "2019-06-01"
-
+    print("Starting query")
     getTwitter = GetTwitter()
     getTwitter.getTweetsbyQuery(query,max_tweets,date_since)
     getTwitter.clean_tweets()
+    print("Query succesfully executed")
+    print(limit.resources.search)
 
 
 
