@@ -18,8 +18,6 @@ class TMDBData():
             response = requests.get(path)
             popularMovies_dict = response.json()
             popularMovies = popularMovies.append(popularMovies_dict['results'],ignore_index=True)
-
-        popularMovies.to_csv(".//SearchData//popularMovies.csv")
         return popularMovies
 
     def getNowPlayingMovies(self, pages):
@@ -30,8 +28,6 @@ class TMDBData():
             response = requests.get(path)
             nowPlayingMovies_dict = response.json()
             nowPlayingMovies = nowPlayingMovies.append(nowPlayingMovies_dict['results'],ignore_index=True)
-
-        nowPlayingMovies.to_csv(".//SearchData//nowPlayingMovies.csv")
         return nowPlayingMovies
 
     def getTopRatedMovies(self, pages):
@@ -43,8 +39,6 @@ class TMDBData():
             response = requests.get(path)
             topRatedMovies_dict = response.json()
             topRatedMovies = topRatedMovies.append(topRatedMovies_dict['results'], ignore_index=True)
-
-        topRatedMovies.to_csv(".//SearchData//topRatedMovies.csv")
         return topRatedMovies
 
     def getUpcomingMovies(self, pages):
@@ -56,8 +50,6 @@ class TMDBData():
             response = requests.get(path)
             upcomingMovies_dict = response.json()
             upcomingMovies = upcomingMovies.append(upcomingMovies_dict['results'], ignore_index=True)
-
-        upcomingMovies.to_csv(".//SearchData//upcomingMovies.csv")
         return upcomingMovies
 
     def getMovieGenres(self):
@@ -66,7 +58,6 @@ class TMDBData():
         response = requests.get(path)
         movieGenres_dict = response.json()
         movieGenres = pd.DataFrame(movieGenres_dict['genres'])
-        movieGenres.to_csv(".//SearchData//movieGenres.csv")
         return movieGenres
 
 if __name__ == '__main__':
