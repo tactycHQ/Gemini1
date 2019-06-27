@@ -93,6 +93,7 @@ class GetTwitter():
             clean_tweets.append(self.spacy_cleaner(tweet))
         return clean_tweets
 
+
     def spacy_cleaner(self,text):
         try:
             decoded = unidecode.unidecode(codecs.decode(text, 'unicode_escape'))
@@ -118,21 +119,13 @@ class GetTwitter():
 
 
 if __name__ == '__main__':
-    query = 'england -filter:retweets -filter:links -filter:media -filter:replies'
-    # query = 'biglittlelies'
-    max_tweets = 100
-    date_since = "2019-06-01"
-    print("Starting query")
-    getTwitter = GetTwitter()
-    tweets_text, tweet_location, tweet_time = getTwitter.getTweetsbyQuery(query,max_tweets,date_since)
-    clean_tweets = getTwitter.clean_tweets(tweets_text)
-    pd.DataFrame({'tweet_text':np.array(tweets_text),
-                  'clean_tweets':np.array(clean_tweets),
-                  'tweet_location':np.array(clean_tweets),
-                  'tweet_time': np.array(clean_tweets)}
-                 ).to_csv("..//Database//cleanTweets.csv")
-    print("Query succesfully executed")
-    print(DotMap(getTwitter.api.rate_limit_status()).resources.search)
+    df = pd.read_csv("C:\\Users\\anubhav\\Desktop\\Projects\\Pulse1\\data\\nyt_tweets.csv")
+    df.columns = ["tweets","sentiment"]
+    tweets = df['tweets']
+
+    getTw = GetTwitter()
+    clean = getTw.clean_tweets(tweets)
+    pd.DataFrame(np.array(clean)).to_csv("clean.csv")
 
 
 
