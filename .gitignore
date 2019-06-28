@@ -127,3 +127,7 @@ dmypy.json
 /Keys/keys.json
 .idea/
 requirements.txt
+/Database/all_tmdb_movies.csv
+/Database/queries_sent.csv
+/Database/query_results.csv
+/Database/query_results.pkl
