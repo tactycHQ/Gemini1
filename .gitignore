@@ -126,5 +126,4 @@ dmypy.json
 
 /Keys/keys.json
 .idea/
-APICalls/tweets.csv
 requirements.txt

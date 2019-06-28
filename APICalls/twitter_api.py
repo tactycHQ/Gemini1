@@ -108,7 +108,8 @@ class GetTwitter():
                 pass
             else:
                 if t.lemma_ == '-PRON-':
-                    final_tokens.append(str(t))
+                    # final_tokens.append(str(t))
+                    pass
                 else:
                     sc_removed = re.sub("[^a-zA-Z]", '', str(t.lemma_))
                     if len(sc_removed) > 1:

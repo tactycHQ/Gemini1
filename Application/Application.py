@@ -1,9 +1,7 @@
-#Gets tags from contentbuilder
-#Gets data from API and writes clean data to DB
-#Runs predictions from data to generate pulse score
-#Delivers all content and pulse scores
-from APICalls.TMDBRequests import TMDBRequests
-from APICalls.GetTwitter import GetTwitter
+#Gets data from TMDB and processes data to generate queries
+#Pulls tweets based on queries
+from APICalls.tmdb_api import TMDBRequests
+from APICalls.twitter_api import GetTwitter
 import pandas as pd
 import numpy as np
 from itertools import islice
@@ -17,6 +15,7 @@ class Application():
         pass
 
     def getTMDBContent(self):
+        '''Gets data from TMDB for 4 categories - popular, top rated, upcoming and now playing'''
         TMDBData = TMDBRequests()
         self.popularMovies = TMDBData.getPopularMovies(pages=2)
         self.topRatedMovies = TMDBData.getTopRatedMovies(pages=2)
@@ -25,6 +24,7 @@ class Application():
         logging.info("API data recieved from TMDB")
 
     def writeTMDBtoDB(self):
+        '''Combines TMDB data into master allTitles dataframe and saves to file '''
         allTitles = pd.DataFrame()
         self.allTitles = allTitles.append([self.popularMovies, self.topRatedMovies, self.upcomingMovies, self.nowPlayingMovies], ignore_index=True)
         self.allTitles['content_type'] = "movie"
@@ -33,14 +33,17 @@ class Application():
         logging.info("{} movies extracted from TMDB".format(self.allTitles.shape[0]))
 
     def getTMDBfromDB(self):
+        '''Loads TMDB data '''
         self.allTitles = pd.read_csv("..//Database/all_tmdb_movies.csv")
 
     def getUniqueTitles(self):
+        '''removes duplicate titles from TMDB data'''
         allTitleNames = self.allTitles['title']
         unique_titles = np.unique(allTitleNames)
         return unique_titles
 
     def cleanTitle(self, title):
+        '''Cleans title name by removing hifens, colons and periods. So "Avengers: Endgame" becomes "Avengers Endgame'''
         # cleanTitle = title.replace(" ", "").lower()
         cleanTitle = title.replace(",", "")
         cleanTitle = cleanTitle.replace(".", "")
@@ -50,6 +53,7 @@ class Application():
         return cleanTitle
 
     def removeSpaces(self, title):
+        '''Cleans title name by removing spaces, hifens, colons and periods. So "Avengers: Endgame" becomes "avengersendgame'''
         spacesRemoved = title.replace(" ", "").lower()
         spacesRemoved = spacesRemoved.replace(",", "")
         spacesRemoved = spacesRemoved.replace(".", "")
@@ -59,40 +63,54 @@ class Application():
         return spacesRemoved
 
     def quotesTitle(self, title):
+        '''Adds quotes around titles. So [Avengers: Endgame] becomes "Avengers: Endgame" so twitter can use this exact string'''
         return '"{}"'.format(title)
 
     def queryCombinations(self, title):
+        '''Generates a query string for each title'''
         filter_String = "-filter:retweets -filter:links -filter:replies"
         #note can also add -filter:media if needed but that seems to remove most tweets
         content_string = "AND (release OR film OR movie OR watched)"
         combination = '({} OR {} OR {} OR {} {} {})'.format(title, self.cleanTitle(title),self.removeSpaces(title),self.quotesTitle(title),content_string, filter_String)
-
         return combination
 
-    def createTwitterQueries(self,titles):
-        query_dict = dict()
-        logging.info("Creating queries")
+    def createTwitterQueries(self):
+        '''Creates query combinations for all titles and writes it to a file to be processed by twitter via getTweets. Returns a dataframe of [title, query string]'''
 
+        titles = self.getUniqueTitles() #get unique titles
+
+        logging.info("Creating queries")
+        query_dict = dict()
         for title in titles:
             query_dict.update({title:self.queryCombinations(title)})
+
         query_df = pd.DataFrame(list(query_dict.values()), index = query_dict.keys()).reset_index()
         query_df.columns = ['title','queryString']
         query_df.to_csv("..//Database//queries_sent.csv")
+
+        self.query_df = query_df
         logging.info("Queries created")
         return query_df
 
-    def getTweets(self,query_df, batch_size):
+    def getTweets(self,batch_size):
+        '''Queries Twitter API and gets tweet for each title. Cleans the tweet and returns a dataframe of [title, raw tweets, clean tweets]'''
+
+        # create twitter queries
+        self.createTwitterQueries()
+
+        # instantate twitter api
         getTwitter = GetTwitter()
         max_tweets = 100
         date_since = "2019-06-01"
-        logging.info("Getting Tweets from Twitter API")
 
+        #start query process
         rawTweets = []
         cleanTweets = []
         titleTracker = []
         counter=0
 
-        for index, row in query_df.iterrows():
+        logging.info("Getting Tweets from Twitter API")
+        for index, row in self.query_df.iterrows():
             if counter < batch_size:
                 try:
                     tweets_text, tweet_location, tweet_time = getTwitter.getTweetsbyQuery(row['queryString'], max_tweets, date_since)
@@ -107,6 +125,7 @@ class Application():
 
         logging.info("Recieved tweets for {} titles".format(counter))
 
+        #write query results to dataframe pickle
         queryResults = pd.DataFrame({'title':titleTracker,
                                      'rawTweets':rawTweets,
                                      'cleanTweets':cleanTweets}).astype('object')
@@ -121,9 +140,7 @@ if __name__ == '__main__':
     app.getTMDBContent()
     app.writeTMDBtoDB()
     app.getTMDBfromDB()
-    uniques = app.getUniqueTitles()
-    query_df = app.createTwitterQueries(uniques)
-    results = app.getTweets(query_df, batch_size=300)
+    results = app.getTweets(batch_size=300)
 
 
 
