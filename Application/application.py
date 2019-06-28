@@ -14,24 +14,6 @@ class Application():
     def __init__(self):
         pass
 
-    def getTMDBContent(self):
-        '''Gets data from TMDB for 4 categories - popular, top rated, upcoming and now playing'''
-        TMDBData = TMDBRequests()
-        self.popularMovies = TMDBData.getPopularMovies(pages=2)
-        self.topRatedMovies = TMDBData.getTopRatedMovies(pages=2)
-        self.upcomingMovies = TMDBData.getUpcomingMovies(pages=2)
-        self.nowPlayingMovies = TMDBData.getNowPlayingMovies(pages=2)
-        logging.info("API data recieved from TMDB")
-
-    def writeTMDBtoDB(self):
-        '''Combines TMDB data into master allTitles dataframe and saves to file '''
-        allTitles = pd.DataFrame()
-        self.allTitles = allTitles.append([self.popularMovies, self.topRatedMovies, self.upcomingMovies, self.nowPlayingMovies], ignore_index=True)
-        self.allTitles['content_type'] = "movie"
-        self.allTitles.to_csv("..//Database//all_tmdb_movies.csv")
-        logging.info("API data saved to file")
-        logging.info("{} movies extracted from TMDB".format(self.allTitles.shape[0]))
-
     def getTMDBfromDB(self):
         '''Loads TMDB data '''
         self.allTitles = pd.read_csv("..//Database/all_tmdb_movies.csv")
@@ -95,6 +77,9 @@ class Application():
     def getTweets(self,batch_size):
         '''Queries Twitter API and gets tweet for each title. Cleans the tweet and returns a dataframe of [title, raw tweets, clean tweets]'''
 
+        # get titles to query from database
+        self.getTMDBfromDB()
+
         # create twitter queries
         self.createTwitterQueries()
 
@@ -123,7 +108,7 @@ class Application():
                 except Exception as ex:
                     print(ex)
 
-        logging.info("Recieved tweets for {} titles".format(counter))
+        logging.info("Received tweets for {} titles".format(counter))
 
         #write query results to dataframe pickle
         queryResults = pd.DataFrame({'title':titleTracker,
@@ -137,9 +122,7 @@ class Application():
 
 if __name__ == '__main__':
     app = Application()
-    app.getTMDBContent()
-    app.writeTMDBtoDB()
-    app.getTMDBfromDB()
+
     results = app.getTweets(batch_size=300)
 
 
